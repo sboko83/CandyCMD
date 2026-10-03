@@ -1,0 +1,141 @@
+{
+  "synthetic": true,
+  "key_ascii": "fixture-key-1234",
+  "cases": [
+    {
+      "name": "unknown-codes",
+      "body": "1d4b0b001406105e3f215b174a106040071d17231c340c0f51474e1d01101f16351d19001a26210f51474e1d00101f1625061c1d1617205f190a0b4813081103565b5a585722170f51474e1d02101f16361b281c5748471a5b515b0113605659320015115748471a5b505b011376414d2a0c0e564f50521d5d47550f655b5e5144535a43454547014937185d58565c165c4b4f444d50490f24150d1c1308110356505a58573d15595947430f060303164a4b3704014147174952481c131e117b161d4c564f50521c5947550f7e42470144535a4344414701492a09590710091651584c5659502a5d1f525b171305020144455a3b05065d0f51474e1c07101f16340c1e0610010d0f51474e1c06101f1625051d151b340c411f000b0f0b1004055e4b545622131148193118435a7446580a4b425642435c0f47473d5f485b5d532b081615121717610e131c411308110354595a58573600413d04150f0b100406574b5456311d0a5f3811185954100916515b4a5659503748080c09487856110e44272d383950490f280d1c4e5a67436712080c115748471a59515b0113744640131b1d321c170949495f5b4b4446464603440e151907000f1618",
+      "expected": {
+        "statusTD": {
+          "StatoWiFi": "700",
+          "StatoTD": "701",
+          "CodiceErrore": "702",
+          "Pr": "703",
+          "PrPh": "704",
+          "RemTime": "705",
+          "DryLev": "706",
+          "Time": "707",
+          "Rapido": "708",
+          "Opt1": "709",
+          "Opt2": "710",
+          "Opt3": "711",
+          "Opt4": "712",
+          "Opt5": "713",
+          "Opt6": "714",
+          "Opt7": "715",
+          "Opt8": "716",
+          "Refresh": "717",
+          "CleanFilter": "718",
+          "WaterTankFull": "719",
+          "DryingManagerLevel": "720",
+          "DelVal": "721",
+          "DoorState": "722",
+          "RecipeId": "NULL",
+          "CheckUpState": "724",
+          "FutureField": "future-value"
+        }
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "missing-and-malformed-values",
+      "body": "1d4b0b001406105e3f215b174a10775b091b2b001406000f51475b011360565932001511574847430411544c1c5c4659040c0a56080f",
+      "expected": {
+        "statusTD": {
+          "DoorState": "",
+          "RemTime": "not-a-number"
+        }
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "empty-status",
+      "body": "1d4b0b001406105e3f215b174a4f4e",
+      "expected": {
+        "statusTD": {}
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "closed-daily-59",
+      "body": "1d4b0b001406105e3f215b174a10775b091b2b001406000f5147480f1d10634644535a45575e477f0e082d445c57110e445c4156080f",
+      "expected": {
+        "statusTD": {
+          "DoorState": "1",
+          "Pr": "1",
+          "RemTime": "59"
+        }
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "open-door",
+      "body": "1d4b0b001406105e3f215b174a10775b091b2b001406000f5147490f4c4f",
+      "expected": {
+        "statusTD": {
+          "DoorState": "0"
+        }
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "daily-45-delay-30",
+      "body": "1d4b0b001406105e3f215b174a10634644535a46575e477f0e082d445c57110e445d4d56595021480733184113081107564b0509",
+      "expected": {
+        "statusTD": {
+          "Pr": "2",
+          "RemTime": "45",
+          "DelVal": "30"
+        }
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "daily-45-delay-60",
+      "body": "1d4b0b001406105e3f215b174a10634644535a46575e477f0e082d445c57110e445d4d56595021480733184113081102564b0509",
+      "expected": {
+        "statusTD": {
+          "Pr": "2",
+          "RemTime": "45",
+          "DelVal": "60"
+        }
+      },
+      "outcome": "valid_status"
+    },
+    {
+      "name": "odd-hex",
+      "body": "abc",
+      "outcome": "invalid_payload"
+    },
+    {
+      "name": "invalid-hex",
+      "body": "not-hex",
+      "outcome": "invalid_payload"
+    },
+    {
+      "name": "empty-body",
+      "body": "",
+      "outcome": "invalid_payload"
+    },
+    {
+      "name": "bad-request",
+      "body": "{\"response\":\"BAD REQUEST\"}",
+      "outcome": "invalid_payload"
+    },
+    {
+      "name": "wrong-root",
+      "body": "1d4b0a1106020a4318005b17137d78161b",
+      "outcome": "invalid_payload"
+    },
+    {
+      "name": "non-string-value",
+      "body": "1d4b0b001406105e3f215b174a10775b091b2b001406000f510b0c415d4f4e",
+      "outcome": "invalid_payload"
+    },
+    {
+      "name": "truncated-payload",
+      "body": "1d4b0b001406105e3f215b174a106040071d17231c340c0f51474e1d01101f16351d19001a26210f51474e1d00101f1625061c1d1617205f190a0b4813081103565b5a585722170f51474e1d02101f16361b281c5748471a5b515b0113605659320015115748471a5b505b011376414d2a0c0e564f50521d5d47550f655b5e5144535a43454547014937185d58565c165c4b4f444d50490f24150d1c1308110356505a58573d15595947430f060303164a4b3704014147174952481c131e117b161d4c564f50521c5947550f7e42470144535a4344414701492a09590710091651584c5659502a5d1f525b171305020144455a3b05065d0f51474e1c07101f16340c1e0610010d0f51474e1c06101f1625051d151b340c411f000b0f0b1004055e4b545622131148193118435a7446580a4b425642435c0f47473d5f485b5d532b081615121717610e131c411308110354595a58573600413d04150f0b100406574b5456311d0a5f3811185954100916515b4a5659503748080c09487856110e44272d383950490f280d1c4e5a67436712080c115748471a59515b0113744640131b1d321c170949495f5b4b4446464603440e151907000f16",
+      "outcome": "invalid_payload"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<resources>
+    <string name="my_dryer">Моя сушилка</string>
+    <string name="dryer_family">Candy RapidÓ</string>
+    <string name="appearance">Оформление</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="done">Готово</string>
+    <string name="ready_to_dry">Готова к сушке</string>
+    <string name="close_picker">Закрыть</string>
+    <string name="program_sport">Спорт</string>
+    <string name="program_crease">Без складок</string>
+    <string name="program_small_load">Неполная загрузка</string>
+    <string name="program_dark">Темные и Цветные</string>
+    <string name="program_eco_cotton">Эко-хлопок</string>
+    <string name="duration_pending">Время уточняется</string>
+    <string name="panel_only">Пока только на панели</string>
+    <string name="panel_program_help">Эту программу пока можно запустить только на самой сушилке. Управление из приложения будет добавлено.</string>
+    <string name="duration_note">≈ — начальная оценка. Время автоматической сушки зависит от загрузки и влажности.</string>
+    <string name="drying_duration">Длительность сушки</string>
+    <string name="start_drying">Начать сушку</string>
+    <string name="connect_dryer">Подключим сушилку</string>
+    <string name="find_dryer">Найти сушилку</string>
+    <string name="connection_trouble">Не получается подключиться?</string>
+    <string name="connection_first_setup">Сушилка должна быть подключена к той же домашней сети. Первичная настройка её Wi-Fi описана в инструкции машины.</string>
+    <string name="forget_confirm">Забыть сушилку?</string>
+    <string name="machine_error_code">Сообщение об ошибке: %1$s. Проверьте панель сушилки.</string>
+    <string name="machine_tank_code">Сообщение о баке: %1$s. Проверьте панель сушилки.</string>
+    <string name="forget_help">Адрес, ключ и избранное будут удалены с телефона. Чтобы снова управлять сушилкой, её придётся найти заново.</string>
+</resources>

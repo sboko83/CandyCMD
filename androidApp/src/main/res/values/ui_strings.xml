@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home -->
+    <string name="open_dryer">Сушилка и настройки</string>
+    <string name="chip_online">На связи</string>
+    <string name="chip_sleep">Спит</string>
+    <string name="chip_no_wifi">Нет Wi-Fi</string>
+    <string name="chip_connecting">Подключение</string>
+    <string name="connecting_title">Подключаемся к сушилке…</string>
+    <string name="sleep_title">Сушилка спит или выключена</string>
+    <string name="sleep_body">Включите её и поверните ручку в положение Wi-Fi — приложение подключится само.</string>
+    <string name="waiting_dryer">Ждём сушилку…</string>
+    <string name="last_seen">При последнем ответе: %1$s</string>
+    <string name="wifi_off_title">Телефон не в домашней Wi-Fi</string>
+    <string name="wifi_off_body">Подключите телефон к той же сети, что и сушилка.</string>
+    <string name="permission_title">Нужен доступ к локальной сети</string>
+    <string name="permission_body">Без него приложение не видит сушилку.</string>
+    <string name="choose_program">Выбрать программу</string>
+    <string name="door_closed_state">Дверца закрыта</string>
+    <string name="door_open_hint">Закройте дверцу, чтобы запустить программу.</string>
+    <string name="remote_off_hint">Поверните ручку в положение Wi-Fi, чтобы управлять из приложения.</string>
+    <string name="state_running">Сушит · %1$s</string>
+    <string name="state_paused">Пауза · %1$s</string>
+    <string name="state_delayed">Отложенный запуск · %1$s</string>
+    <string name="state_finishing">Завершается</string>
+    <string name="finishing_hint">Последняя фаза. Время окончания сушилка не сообщает.</string>
+    <string name="state_completed">Сушка завершена</string>
+    <string name="completed_hint">Можно открыть дверцу и достать бельё.</string>
+    <string name="state_panel_help">Управлять ею можно на самой сушилке.</string>
+    <string name="state_busy">Сушилка занята</string>
+    <string name="duration_hm">%1$d ч %2$02d мин</string>
+    <string name="duration_m">%1$d мин</string>
+    <string name="finish_at">Закончит ≈ в %1$s</string>
+    <string name="start_at">Старт в %1$s</string>
+    <string name="starts_in">Через %1$s · сушилка запустится сама, телефон можно выключить</string>
+    <string name="cancel_start">Отменить запуск</string>
+    <string name="cancel_drying">Отменить</string>
+    <string name="cancel_drying_title">Отменить сушку?</string>
+    <string name="cancel_start_title">Отменить отложенный запуск?</string>
+    <string name="cancel_body">Сушилка остановит программу и вернётся в режим ожидания.</string>
+    <string name="keep_running">Не отменять</string>
+    <string name="command_waiting_short">Ждём ответа сушилки…</string>
+    <string name="command_done">Сушилка подтвердила команду.</string>
+    <string name="command_pending_title">Сушилка пока не подтвердила команду</string>
+    <string name="command_pending_body">Проверьте панель. Приложение продолжит следить за состоянием, а отменить программу можно в любой момент.</string>
+    <string name="check_again">Проверить снова</string>
+    <string name="favorites">Избранное</string>
+    <string name="favorite_menu">Действия: %1$s</string>
+    <string name="filter_reminder">Очистите фильтр сушилки.</string>
+
+    <!-- Start wizard -->
+    <string name="step_of">Шаг %1$d из %2$d</string>
+    <string name="step_program">Программа</string>
+    <string name="step_options">Опции</string>
+    <string name="options_fixed">У этой программы настройки фиксированы: сухость, таймер и Лёгкая глажка из приложения для неё не подтверждены.</string>
+    <string name="step_start">Когда начать</string>
+    <string name="step_confirm">Проверьте и запустите</string>
+    <string name="group_panel">Программы панели</string>
+    <string name="group_recipes">Рецепты</string>
+    <string name="program_favorite">Избранное: %1$s</string>
+    <string name="recipes_note">Рецепты задают сухость и опции сами.</string>
+    <string name="next">Далее</string>
+    <string name="back">Назад</string>
+    <string name="mode_dryness">По сухости</string>
+    <string name="dryness">Сухость</string>
+    <string name="estimate_empty">≈%1$d мин на пустом барабане</string>
+    <string name="panel_extras">Что ещё есть на панели</string>
+    <string name="start_later">Отложить старт</string>
+    <string name="start_later_summary">Старт в %1$s · закончит ≈ в %2$s</string>
+    <string name="row_program">Программа</string>
+    <string name="row_settings">Настройки</string>
+    <string name="row_start">Старт</string>
+    <string name="row_finish">Окончание</string>
+    <string name="at_time">в %1$s</string>
+    <string name="approx_time">≈ %1$s</string>
+    <string name="save_favorite">Сохранить в избранное</string>
+    <string name="favorite_name">Название</string>
+    <string name="start_at_button">Запустить в %1$s</string>
+    <string name="start_blocked">Запуск доступен, когда сушилка на связи, дверца закрыта и ручка в положении Wi-Fi.</string>
+
+    <!-- Dryer screen -->
+    <string name="dryer_title">Сушилка</string>
+    <string name="section_connection">Подключение</string>
+    <string name="find_again">Найти сушилку заново</string>
+    <string name="find_again_help">Если сменился роутер или адрес</string>
+    <string name="manual_address">Указать адрес вручную</string>
+    <string name="phone_wifi">Настройки Wi-Fi телефона</string>
+    <string name="section_app">Приложение</string>
+    <string name="diagnostics">Диагностика</string>
+    <string name="diagnostics_help">Состояние и коды для поддержки</string>
+    <string name="forget_dryer">Забыть сушилку</string>
+    <string name="app_version">CandyCMD %1$s (%2$d)</string>
+    <string name="address_unknown">Адрес не сохранён</string>
+    <string name="last_problem">Последняя ошибка связи: %1$s</string>
+
+    <!-- Setup -->
+    <string name="setup_step_wifi">Подключите телефон к домашнему Wi-Fi</string>
+    <string name="setup_step_knob">Поверните ручку сушилки в положение Wi-Fi</string>
+    <string name="found_title">Найденные сушилки</string>
+    <string name="found_row">Сушилка · %1$s</string>
+    <string name="connect_address">Подключиться</string>
+</resources>
