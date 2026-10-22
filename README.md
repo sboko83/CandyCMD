@@ -76,6 +76,10 @@ Requirements: JDK 25, Android SDK Platform 37 and Build Tools 36.0.0.
 
 The APK is written to `androidApp/build/outputs/apk/debug/`. Changes are listed in the [changelog](CHANGELOG.md).
 
+## Security
+
+Found a vulnerability? Report it privately — see [SECURITY.md](SECURITY.md).
+
 ## License
 
 CandyCMD is released under the [MIT License](LICENSE).

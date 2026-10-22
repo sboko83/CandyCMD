@@ -76,6 +76,10 @@
 
 APK появится в `androidApp/build/outputs/apk/debug/`. Список изменений — в [CHANGELOG](CHANGELOG.md).
 
+## Безопасность
+
+Нашли уязвимость? Сообщите о ней приватно — см. [SECURITY.md](SECURITY.md).
+
 ## Лицензия
 
 CandyCMD распространяется по [лицензии MIT](LICENSE).
