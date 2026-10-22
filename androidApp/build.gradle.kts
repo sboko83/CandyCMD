@@ -17,8 +17,8 @@ android {
         applicationId = "ru.bsv.candycmd"
         minSdk = 26
         targetSdk = 37
-        versionCode = 17
-        versionName = "0.8.0"
+        versionCode = 18
+        versionName = "0.9.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
