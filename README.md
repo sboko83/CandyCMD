@@ -17,6 +17,7 @@ The project was developed with the help of the AI coding agents Claude Code and 
 - Adjust dryness, timed drying and Easy Iron where the selected program supports them.
 - Start drying immediately or schedule a start up to 24 hours ahead.
 - Pause, resume or cancel drying, and cancel a scheduled start.
+- Re-finds the dryer automatically if the router assigns it a new local address.
 - Save programs and settings as favorites for quick access.
 - Choose a light or dark theme, or follow your phone’s appearance settings.
 

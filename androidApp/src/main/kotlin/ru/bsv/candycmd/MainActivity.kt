@@ -121,7 +121,9 @@ class MainActivity : ComponentActivity() {
                 forget = { route = Route.HOME; model.forget() },
             ))
             Route.HOME -> ScreenFrame(header = { HomeHeader(link) { route = Route.DRYER } }) {
-                HomeContent(state, commandState, model.busy, link, model.presets, model.presetMessage, HomeActions(
+                HomeContent(state, commandState, model.busy, link, model.refinding, model.refindFailed,
+                    model.presets, model.presetMessage, HomeActions(
+                    findAgain = { model.openConnection() },
                     choose = { draft = StartDraft(); route = Route.WIZARD },
                     favorite = { preset -> StartDraft.from(preset)?.let { draft = it; route = Route.WIZARD } },
                     rename = { preset, name -> model.savePreset(name, preset.settings, preset.id) },

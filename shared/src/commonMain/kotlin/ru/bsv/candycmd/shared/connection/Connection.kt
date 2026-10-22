@@ -1,5 +1,7 @@
 package ru.bsv.candycmd.shared.connection
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ru.bsv.candycmd.shared.protocol.*
@@ -111,6 +113,52 @@ class DeviceConnection(
     }
 
     suspend fun connect(ip: String, candidate: Candidate? = null): ConnectedDevice = mutex.withLock {
+        connectLocked(ip, candidate)
+    }
+
+    suspend fun restore(): ConnectedDevice = mutex.withLock {
+        val profile = store.load() ?: throw ConnectionException(ConnectionProblem.NO_PROFILE)
+        ConnectedDevice(profile, checked(codec.read(network.read(profile.address), profile.keyBytes())))
+    }
+
+    /** Re-finds the saved dryer after its address changed; only MAC or key evidence replaces the profile. */
+    suspend fun reconnect(): ConnectedDevice = mutex.withLock {
+        val previous = store.load() ?: throw ConnectionException(ConnectionProblem.NO_PROFILE)
+        val savedKey = previous.keyBytes()
+        if (previous.mac == null && savedKey == null) throw ConnectionException(ConnectionProblem.NO_CANDIDATES)
+        for (candidate in network.discover()) {
+            currentCoroutineContext().ensureActive()
+            if (candidate.address.value == previous.address.value) continue
+            if (candidate.mac != null && previous.mac != null && candidate.mac != previous.mac) continue
+            if (candidate.mac != null && candidate.mac == previous.mac) {
+                // The announced MAC is the device identity; an unreadable announcement moves on.
+                try {
+                    return@withLock connectLocked(candidate.address.value, candidate)
+                } catch (error: ConnectionException) {
+                    if (error.problem in phoneSideProblems) throw error
+                }
+                continue
+            }
+            if (savedKey == null) continue
+            // A scan candidate carries no MAC: only the saved key decrypting the response proves identity.
+            val body = try {
+                network.read(candidate.address)
+            } catch (error: ConnectionException) {
+                if (error.problem in phoneSideProblems) throw error
+                continue
+            }
+            val status = codec.read(body, savedKey)
+            if (status is ReadResult.Success) {
+                val profile = DeviceProfile(candidate.address, previous.mac, savedKey)
+                store.save(profile)
+                return@withLock ConnectedDevice(profile, status.value)
+            }
+        }
+        throw ConnectionException(ConnectionProblem.NO_CANDIDATES)
+    }
+
+    /** Must run under the connection mutex; the mutex is not reentrant. */
+    private suspend fun connectLocked(ip: String, candidate: Candidate?): ConnectedDevice {
         val address = LocalAddress.parse(ip) ?: throw ConnectionException(ConnectionProblem.INVALID_ADDRESS)
         require(candidate == null || candidate.address.value == address.value)
         val previous = store.load()
@@ -134,12 +182,7 @@ class DeviceConnection(
         }
         val profile = DeviceProfile(address, candidate?.mac ?: if (sameDevice) previous.mac else null, key)
         store.save(profile)
-        ConnectedDevice(profile, status)
-    }
-
-    suspend fun restore(): ConnectedDevice = mutex.withLock {
-        val profile = store.load() ?: throw ConnectionException(ConnectionProblem.NO_PROFILE)
-        ConnectedDevice(profile, checked(codec.read(network.read(profile.address), profile.keyBytes())))
+        return ConnectedDevice(profile, status)
     }
 
     suspend fun forget() = mutex.withLock { store.delete() }
@@ -148,6 +191,10 @@ class DeviceConnection(
         is ReadResult.Success -> result.value
         is ReadResult.Failure -> fail(result.error)
     }
+
+    /** Problems of the phone or the network that abort a search instead of moving to the next candidate. */
+    private val phoneSideProblems = setOf(ConnectionProblem.PERMISSION_DENIED, ConnectionProblem.NO_WIFI,
+        ConnectionProblem.WIFI_SELECTION_REQUIRED, ConnectionProblem.NETWORK_LOST, ConnectionProblem.STORAGE_UNAVAILABLE)
 
     private fun fail(error: ReadError): Nothing = throw ConnectionException(when (error) {
         is ReadError.Compatibility -> ConnectionProblem.UNEXPECTED_DEVICE

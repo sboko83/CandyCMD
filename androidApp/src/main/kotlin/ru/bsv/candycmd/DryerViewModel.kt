@@ -13,6 +13,7 @@ import ru.bsv.candycmd.connection.LocalControlStore
 import ru.bsv.candycmd.shared.control.*
 import java.util.UUID
 import ru.bsv.candycmd.shared.connection.*
+import ru.bsv.candycmd.shared.protocol.DryerStatus
 import ru.bsv.candycmd.shared.monitor.StatusMonitor
 import ru.bsv.candycmd.shared.monitor.SerialSession
 
@@ -21,7 +22,7 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     val network = AndroidDeviceNetwork(application)
     private val connection = DeviceConnection(network, EncryptedProfileStore(application))
     // Routine polling also lets an unconfirmed command settle; reconciliation only reads.
-    val monitor: StatusMonitor = StatusMonitor({ connection.restore().also { controller.reconcile(it) }.status }, System::currentTimeMillis)
+    val monitor: StatusMonitor = StatusMonitor({ pollStatus() }, System::currentTimeMillis)
     private val controlStore = LocalControlStore(application)
     val controller: CommandController = CommandController(connection::restore, network, controlStore, System::currentTimeMillis,
         observe = { monitor.reset(it) })
@@ -62,6 +63,59 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     private var favoriteProgramWrites = 0
     var permissionGranted by mutableStateOf(network.hasPermission())
         private set
+    var refinding by mutableStateOf(false)
+        private set
+    var refindFailed by mutableStateOf(false)
+        private set
+    private var consecutiveFailures = 0
+    private var lastRefindAttempt = 0L
+    private var refindJob: Job? = null
+
+    /** A poll failure that looks like a moved dryer arms the automatic re-search; success disarms it. */
+    private suspend fun pollStatus(): DryerStatus {
+        try {
+            val device = connection.restore()
+            controller.reconcile(device)
+            consecutiveFailures = 0
+            refindFailed = false
+            return device.status
+        } catch (error: ConnectionException) {
+            noteReadFailure(error.problem)
+            throw error
+        }
+    }
+
+    private fun noteReadFailure(problem: ConnectionProblem) {
+        if (problem !in refindProblems) return
+        consecutiveFailures++
+        if (consecutiveFailures < REFIND_AFTER_FAILURES) return
+        if (System.currentTimeMillis() - lastRefindAttempt < REFIND_RETRY_MILLIS) return
+        startRefind()
+    }
+
+    /** Runs outside the connection mutex and the session: the monitor keeps polling the old address meanwhile. */
+    private fun startRefind() {
+        if (!foreground || busy || refinding || !hasProfile || !showMonitor) return
+        refinding = true
+        refindFailed = false
+        lastRefindAttempt = System.currentTimeMillis()
+        refindJob = scope.launch {
+            try {
+                val device = connection.reconnect()
+                ip = device.profile.address.value
+                consecutiveFailures = 0
+                refindFailed = false
+                message = text(R.string.refind_success)
+                monitor.refresh()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: ConnectionException) { refindFailed = true }
+            finally { refinding = false }
+        }
+    }
+
+    private val refindProblems = setOf(ConnectionProblem.TIMEOUT, ConnectionProblem.UNAVAILABLE,
+        ConnectionProblem.HTTP_STATUS, ConnectionProblem.RESPONSE_TOO_LARGE,
+        ConnectionProblem.UNEXPECTED_DEVICE, ConnectionProblem.INVALID_RESPONSE)
 
     fun start() {
         foreground = true
@@ -85,6 +139,8 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     fun stop() {
         foreground = false
         session.cancel()
+        refindJob?.cancel()
+        refinding = false
         busy = false
         candidates = emptyList()
     }
@@ -242,6 +298,8 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
         connection.forget()
         hasProfile = false
         monitor.reset()
+        consecutiveFailures = 0
+        refindFailed = false
         ip = ""
         candidates = emptyList()
         showMonitor = false
@@ -285,6 +343,11 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
         ConnectionProblem.STORAGE_UNAVAILABLE)
 
     private fun text(id: Int) = getApplication<Application>().getString(id)
+
+    private companion object {
+        const val REFIND_AFTER_FAILURES = 3
+        const val REFIND_RETRY_MILLIS = 90_000L
+    }
 
     override fun onCleared() { scope.cancel() }
 }

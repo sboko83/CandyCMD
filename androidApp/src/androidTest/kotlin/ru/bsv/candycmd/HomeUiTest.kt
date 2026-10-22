@@ -21,13 +21,15 @@ class HomeUiTest {
     @get:Rule val compose = createComposeRule()
     private val commands = mutableListOf<DryerCommand>()
     private var chosen = 0
+    private var findAgain = 0
     private val favorites = mutableListOf<Preset>()
     private val renamed = mutableListOf<String>()
 
     private fun show(monitor: MonitorState, state: CommandState = CommandState(), presets: List<Preset> = emptyList(),
-                     large: Boolean = false) {
+                     large: Boolean = false, refinding: Boolean = false, refindFailed: Boolean = false) {
         val actions = HomeActions(choose = { chosen++ }, favorite = { favorites += it }, rename = { _, name -> renamed += name },
-            delete = {}, command = { commands += it }, check = {}, wifiSettings = {}, requestPermission = {})
+            delete = {}, command = { commands += it }, check = {}, wifiSettings = {}, requestPermission = {},
+            findAgain = { findAgain++ })
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, if (large) 1.6f else 1f)) {
@@ -35,7 +37,7 @@ class HomeUiTest {
                     Box(if (large) Modifier.width(320.dp) else Modifier) {
                         val link = monitor.link(connecting = false)
                         ScreenFrame(header = { HomeHeader(link) {} }) {
-                            HomeContent(monitor, state, false, link, presets, "", actions)
+                            HomeContent(monitor, state, false, link, refinding, refindFailed, presets, "", actions)
                         }
                     }
                 }
@@ -52,6 +54,21 @@ class HomeUiTest {
         compose.onNodeWithTag("choose-program").assertIsNotEnabled()
         assertTrue(compose.onAllNodesWithText("Отменить").fetchSemanticsNodes().isEmpty())
         captureScreen("home-sleep")
+    }
+
+    @Test fun automaticRefindReplacesTheSleepCard() {
+        show(MonitorState(null, null, ConnectionProblem.TIMEOUT, active = true, stale = true), refinding = true)
+        compose.onNodeWithText("Ищем сушилку в сети…").assertExists()
+        compose.onNodeWithText("Сушилка спит или выключена").assertDoesNotExist()
+        captureScreen("home-refinding")
+    }
+
+    @Test fun failedRefindKeepsSleepAdviceAndOffersSearch() {
+        show(MonitorState(runningStatus(), UI_NOW, ConnectionProblem.UNAVAILABLE, active = true, stale = true), refindFailed = true)
+        compose.onNodeWithText("Сушилка спит или выключена").assertExists()
+        compose.onNodeWithText("роутер мог сменить ей адрес", substring = true).assertExists()
+        compose.onNodeWithTag("find-again").performClick()
+        compose.runOnIdle { assertEquals(1, findAgain) }
     }
 
     @Test fun readyOffersProgramWithoutManualRefresh() {

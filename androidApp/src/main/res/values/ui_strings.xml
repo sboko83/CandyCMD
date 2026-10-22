@@ -10,6 +10,10 @@
     <string name="sleep_title">Сушилка спит или выключена</string>
     <string name="sleep_body">Включите её и поверните ручку в положение Wi-Fi — приложение подключится само.</string>
     <string name="waiting_dryer">Ждём сушилку…</string>
+    <string name="refinding_title">Ищем сушилку в сети…</string>
+    <string name="refinding_body">Сохранённый адрес не отвечает. Возможно, роутер выдал сушилке новый адрес — ищем её автоматически.</string>
+    <string name="refind_hint">Если сушилка включена, но не находится — роутер мог сменить ей адрес.</string>
+    <string name="refind_success">Сушилка найдена по новому адресу.</string>
     <string name="last_seen">При последнем ответе: %1$s</string>
     <string name="wifi_off_title">Телефон не в домашней Wi-Fi</string>
     <string name="wifi_off_body">Подключите телефон к той же сети, что и сушилка.</string>

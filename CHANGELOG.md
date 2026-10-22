@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Security policy: report vulnerabilities privately via GitHub advisories or email.
+- The app automatically re-finds the dryer when the router assigns it a new local address and moves
+  the saved connection to it; if the search finds nothing, the home screen explains this and offers
+  a manual search.
 
 ## [0.8.0] - 2026-10-03
 

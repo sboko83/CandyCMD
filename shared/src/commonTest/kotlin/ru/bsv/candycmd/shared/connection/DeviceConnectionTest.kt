@@ -10,7 +10,7 @@ class DeviceConnectionTest {
     private val payload = """{"statusTD":{"StatoWiFi":"700","DoorState":"722"}}""".encodeToByteArray()
     private val key = "fixture-key-1234".encodeToByteArray()
     private val mac = "020000000001"
-    private fun encrypted(body: ByteArray = payload) = body.mapIndexed { i, b ->
+    private fun encrypted(body: ByteArray = payload, key: ByteArray = this.key) = body.mapIndexed { i, b ->
         (b.toInt() xor key[i % key.size].toInt()).and(255).toString(16).padStart(2, '0')
     }.joinToString("").encodeToByteArray()
 
@@ -26,6 +26,7 @@ class DeviceConnectionTest {
         var reads = 0
         var inFlight = 0
         var maximum = 0
+        var discoveries = 0
         var hints = emptyList<Candidate>()
         var problem: ConnectionProblem? = null
         var beforeRead: suspend () -> Unit = {}
@@ -40,7 +41,7 @@ class DeviceConnectionTest {
                 return bodies.removeAt(0)
             } finally { inFlight-- }
         }
-        override suspend fun discover(): List<Candidate> { beforeDiscover(); return hints }
+        override suspend fun discover(): List<Candidate> { discoveries++; beforeDiscover(); return hints }
     }
 
     @Test fun rejectsUrlsDnsNonCanonicalAndNonPrivateAddresses() {
@@ -153,6 +154,70 @@ class DeviceConnectionTest {
         assertEquals(2, connection.discover().size)
         assertEquals(0, store.saves)
         assertEquals(0, network.reads)
+    }
+
+    @Test fun reconnectMovesSavedDryerToAnnouncedAddress() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), mac, key) }
+        val network = Network(mutableListOf(encrypted())).apply {
+            hints = listOf(Candidate(address(20), mac), Candidate(address(21), "020000000099"))
+        }
+        val reconnected = DeviceConnection(network, store).reconnect()
+        assertEquals(ip(20), store.profile?.address?.value)
+        assertContentEquals(key, store.profile?.keyBytes())
+        assertEquals(mac, store.profile?.mac)
+        assertEquals("722", reconnected.status["DoorState"])
+        assertEquals(1, network.reads)
+        assertEquals(1, store.saves)
+    }
+
+    @Test fun reconnectAcceptsScanCandidateOnlyWhenSavedKeyDecrypts() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), null, key) }
+        val network = Network(mutableListOf(encrypted())).apply { hints = listOf(Candidate(address(20), null)) }
+        val reconnected = DeviceConnection(network, store).reconnect()
+        assertEquals(ip(20), store.profile?.address?.value)
+        assertContentEquals(key, store.profile?.keyBytes())
+        assertEquals("722", reconnected.status["DoorState"])
+        assertEquals(1, store.saves)
+    }
+
+    @Test fun reconnectSkipsForeignDevicesAndKeepsTheProfile() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), mac, key) }
+        val network = Network(mutableListOf(encrypted(key = "fixture-key-9999".encodeToByteArray()))).apply {
+            hints = listOf(Candidate(address(21), "020000000099"), Candidate(address(22), null))
+        }
+        assertEquals(ConnectionProblem.NO_CANDIDATES,
+            assertFailsWith<ConnectionException> { DeviceConnection(network, store).reconnect() }.problem)
+        assertEquals(ip(2), store.profile?.address?.value)
+        assertEquals(0, store.saves)
+    }
+
+    @Test fun reconnectWithoutEvidenceNeverSearches() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), null, null) }
+        val network = Network(mutableListOf())
+        assertEquals(ConnectionProblem.NO_CANDIDATES,
+            assertFailsWith<ConnectionException> { DeviceConnection(network, store).reconnect() }.problem)
+        assertEquals(0, network.discoveries)
+    }
+
+    @Test fun reconnectMovesPastAnUnreadableAnnouncement() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), mac, key) }
+        val network = Network(mutableListOf()).apply {
+            hints = listOf(Candidate(address(20), mac)); problem = ConnectionProblem.TIMEOUT
+        }
+        assertEquals(ConnectionProblem.NO_CANDIDATES,
+            assertFailsWith<ConnectionException> { DeviceConnection(network, store).reconnect() }.problem)
+        assertEquals(ip(2), store.profile?.address?.value)
+        assertEquals(0, store.saves)
+    }
+
+    @Test fun reconnectStopsOnPhoneSideProblems() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), null, key) }
+        val network = Network(mutableListOf()).apply {
+            hints = listOf(Candidate(address(20), null)); problem = ConnectionProblem.NETWORK_LOST
+        }
+        assertEquals(ConnectionProblem.NETWORK_LOST,
+            assertFailsWith<ConnectionException> { DeviceConnection(network, store).reconnect() }.problem)
+        assertEquals(0, store.saves)
     }
 
     @Test fun concurrentOperationsSerializeAndForgetCannotBeOverwritten() = runTest {

@@ -28,6 +28,7 @@ internal data class HomeActions(
     val check: () -> Unit,
     val wifiSettings: () -> Unit,
     val requestPermission: () -> Unit,
+    val findAgain: () -> Unit,
 )
 
 internal fun MonitorState.link(connecting: Boolean): LinkState = when {
@@ -44,6 +45,8 @@ internal fun ColumnScope.HomeContent(
     commandState: CommandState,
     busy: Boolean,
     link: LinkState,
+    refinding: Boolean,
+    refindFailed: Boolean,
     presets: List<Preset>,
     presetMessage: String,
     actions: HomeActions,
@@ -57,7 +60,7 @@ internal fun ColumnScope.HomeContent(
         return !busy && !locked && CommandPolicy.blocked(command, fresh) == null
     }
 
-    if (status == null) OfflineCard(monitor, link, actions)
+    if (status == null) OfflineCard(monitor, link, refinding, refindFailed, actions)
     else StatusCard(status, ::allowed, onCommand = actions.command, onCancel = { cancelling = it })
     CommandFeedback(commandState, busy, actions.check)
     MachineNotices(status)
@@ -88,9 +91,15 @@ internal fun ColumnScope.HomeContent(
 }
 
 @Composable
-private fun OfflineCard(monitor: MonitorState, link: LinkState, actions: HomeActions) {
+private fun OfflineCard(monitor: MonitorState, link: LinkState, refinding: Boolean, refindFailed: Boolean, actions: HomeActions) {
     AppCard(tonal = true) {
         when {
+            refinding -> {
+                Text(stringResource(R.string.refinding_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.refinding_body), Modifier.padding(top = 4.dp),
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp))
+            }
             link == LinkState.CONNECTING -> {
                 Text(stringResource(R.string.connecting_title), style = MaterialTheme.typography.titleMedium)
                 LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp))
@@ -117,6 +126,13 @@ private fun OfflineCard(monitor: MonitorState, link: LinkState, actions: HomeAct
                 }
                 Text(stringResource(R.string.sleep_body), Modifier.padding(top = 4.dp),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (refindFailed) {
+                    Text(stringResource(R.string.refind_hint), Modifier.padding(top = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    AppOutlinedButton(onClick = actions.findAgain, Modifier.padding(top = 12.dp).testTag("find-again")) {
+                        Text(stringResource(R.string.find_again))
+                    }
+                }
                 Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp,
