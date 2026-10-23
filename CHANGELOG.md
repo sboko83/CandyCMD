@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-23
+
 ### Fixed
 
 - The automatic dryer search no longer repeats every 90 seconds while the dryer is off: retries slow
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First public release.
 
-[Unreleased]: https://github.com/sboko83/CandyCMD/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/sboko83/CandyCMD/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/sboko83/CandyCMD/releases/tag/v0.9.1
 [0.9.0]: https://github.com/sboko83/CandyCMD/releases/tag/v0.9.0
 [0.8.0]: https://github.com/sboko83/CandyCMD/releases/tag/v0.8.0
