@@ -191,6 +191,15 @@ class DeviceConnectionTest {
         assertEquals(0, store.saves)
     }
 
+    @Test fun reconnectRejectsPlaintextScanReplyAsIdentityProof() = runTest {
+        val store = Store().apply { profile = DeviceProfile(address(2), null, key) }
+        val network = Network(mutableListOf(payload)).apply { hints = listOf(Candidate(address(20), null)) }
+        assertEquals(ConnectionProblem.NO_CANDIDATES,
+            assertFailsWith<ConnectionException> { DeviceConnection(network, store).reconnect() }.problem)
+        assertEquals(ip(2), store.profile?.address?.value)
+        assertEquals(0, store.saves)
+    }
+
     @Test fun reconnectWithoutEvidenceNeverSearches() = runTest {
         val store = Store().apply { profile = DeviceProfile(address(2), null, null) }
         val network = Network(mutableListOf())

@@ -68,7 +68,8 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     var refindFailed by mutableStateOf(false)
         private set
     private var consecutiveFailures = 0
-    private var lastRefindAttempt = 0L
+    private var nextRefindAt = 0L
+    private var refindDelay = REFIND_RETRY_MILLIS
     private var refindJob: Job? = null
 
     /** A poll failure that looks like a moved dryer arms the automatic re-search; success disarms it. */
@@ -78,6 +79,7 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
             controller.reconcile(device)
             consecutiveFailures = 0
             refindFailed = false
+            resetRefindBackoff()
             return device.status
         } catch (error: ConnectionException) {
             noteReadFailure(error.problem)
@@ -89,28 +91,47 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
         if (problem !in refindProblems) return
         consecutiveFailures++
         if (consecutiveFailures < REFIND_AFTER_FAILURES) return
-        if (System.currentTimeMillis() - lastRefindAttempt < REFIND_RETRY_MILLIS) return
+        if (System.currentTimeMillis() < nextRefindAt) return
         startRefind()
     }
 
-    /** Runs outside the connection mutex and the session: the monitor keeps polling the old address meanwhile. */
+    /**
+     * Runs outside the session but holds the connection lock for the whole LAN search (up to about a minute):
+     * polls and commands wait for it. A dryer that is simply off fails every search, so retries back off.
+     */
     private fun startRefind() {
         if (!foreground || busy || refinding || !hasProfile || !showMonitor) return
         refinding = true
         refindFailed = false
-        lastRefindAttempt = System.currentTimeMillis()
         refindJob = scope.launch {
             try {
                 val device = connection.reconnect()
                 ip = device.profile.address.value
                 consecutiveFailures = 0
                 refindFailed = false
+                resetRefindBackoff()
                 message = text(R.string.refind_success)
                 monitor.refresh()
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: ConnectionException) { refindFailed = true }
-            finally { refinding = false }
+            catch (_: ConnectionException) {
+                refindFailed = true
+                nextRefindAt = System.currentTimeMillis() + refindDelay
+                refindDelay = (refindDelay * 2).coerceAtMost(REFIND_MAX_RETRY_MILLIS)
+            }
+            finally { if (refindJob === currentCoroutineContext()[Job]) refinding = false }
         }
+    }
+
+    /** A user operation supersedes the background search and must not wait behind its lock. */
+    private fun cancelRefind() {
+        refindJob?.cancel()
+        refindJob = null
+        refinding = false
+    }
+
+    private fun resetRefindBackoff() {
+        nextRefindAt = 0L
+        refindDelay = REFIND_RETRY_MILLIS
     }
 
     private val refindProblems = setOf(ConnectionProblem.TIMEOUT, ConnectionProblem.UNAVAILABLE,
@@ -139,8 +160,9 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     fun stop() {
         foreground = false
         session.cancel()
-        refindJob?.cancel()
-        refinding = false
+        cancelRefind()
+        // Returning to the app is a fresh attempt: the next outage may search again without waiting.
+        resetRefindBackoff()
         busy = false
         candidates = emptyList()
     }
@@ -181,6 +203,7 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     fun openConnection() {
         if (busy) return
         showMonitor = false
+        cancelRefind()
         session.cancel()
         busy = false
     }
@@ -300,6 +323,7 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
         monitor.reset()
         consecutiveFailures = 0
         refindFailed = false
+        resetRefindBackoff()
         ip = ""
         candidates = emptyList()
         showMonitor = false
@@ -324,6 +348,7 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     private fun operate(block: suspend () -> Unit) {
         if (!foreground || busy) return
         busy = true
+        cancelRefind()
         replaceSession {
             message = text(R.string.connecting)
             try { block() }
@@ -347,6 +372,7 @@ class DryerViewModel(application: Application) : AndroidViewModel(application) {
     private companion object {
         const val REFIND_AFTER_FAILURES = 3
         const val REFIND_RETRY_MILLIS = 90_000L
+        const val REFIND_MAX_RETRY_MILLIS = 15 * 60_000L
     }
 
     override fun onCleared() { scope.cancel() }

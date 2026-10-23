@@ -141,13 +141,16 @@ class DeviceConnection(
             }
             if (savedKey == null) continue
             // A scan candidate carries no MAC: only the saved key decrypting the response proves identity.
+            // A plaintext reply decodes without any key, so it proves nothing and is skipped.
             val body = try {
                 network.read(candidate.address)
             } catch (error: ConnectionException) {
                 if (error.problem in phoneSideProblems) throw error
                 continue
             }
-            val status = codec.read(body, savedKey)
+            val decoded = codec.decode(body, savedKey)
+            if (decoded !is ReadResult.Success || decoded.value.format != ResponseFormat.XOR_JSON) continue
+            val status = codec.validate(decoded.value)
             if (status is ReadResult.Success) {
                 val profile = DeviceProfile(candidate.address, previous.mac, savedKey)
                 store.save(profile)

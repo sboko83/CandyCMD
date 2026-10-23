@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The automatic dryer search no longer repeats every 90 seconds while the dryer is off: retries slow
+  down to at most once every 15 minutes, and opening the app or any manual action resets them.
+- The automatic search no longer accepts another unencrypted appliance on the network as the saved
+  dryer.
+
 ## [0.9.0] - 2026-10-23
 
 ### Added
